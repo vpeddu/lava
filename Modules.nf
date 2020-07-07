@@ -1,9 +1,9 @@
 process CreateGFF { 
     container "quay.io/vpeddu/lava_image:latest"
 
-	// // Retry on fail at most three times 
-    // errorStrategy 'retry'
-    // maxRetries 3
+	// Retry on fail at most three times 
+    errorStrategy 'retry'
+    maxRetries 3
 	
     input:
       val(GENBANK)
@@ -93,8 +93,8 @@ process Align_samples {
 
    container "quay.io/vpeddu/lava_image:latest"
 
-    // errorStrategy 'retry'
-    // maxRetries 3
+    errorStrategy 'retry'
+    maxRetries 3
 
     input:
 	tuple file(R1), val(PASSAGE)
@@ -136,8 +136,8 @@ process Align_samples {
 
 process Pipeline_prep { 
 
-    // errorStrategy 'retry'
-    // maxRetries 3
+    errorStrategy 'retry'
+    maxRetries 3
 
 	container "quay.io/vpeddu/lava_image:latest"
 
@@ -162,11 +162,10 @@ process Pipeline_prep {
 }
 
 process Create_VCF { 
-    // errorStrategy 'retry'
-    // maxRetries 3
+    errorStrategy 'retry'
+    maxRetries 3
 
 	container "quay.io/vpeddu/lava_image:latest"
-	tuple file(R1), file("*.pileup"), file("*.bam"), val(PASSAGE)
 
 	input:
 		tuple file(R1), file(R1_PILEUP), file(BAM), val(PASSAGE)
@@ -207,8 +206,8 @@ process Create_VCF {
 
 process Extract_variants { 
 
-    // errorStrategy 'retry'
-    // maxRetries 3
+    errorStrategy 'retry'
+    maxRetries 3
 
 	container "quay.io/vpeddu/lava_image:latest"
 
@@ -250,8 +249,8 @@ process Extract_variants {
 
 process Annotate_complex { 
 
-    // errorStrategy 'retry'
-    // maxRetries 3
+    errorStrategy 'retry'
+    maxRetries 3
 
 	container "quay.io/vpeddu/lava_image:latest"
 
@@ -279,8 +278,8 @@ process Annotate_complex {
 
 process Generate_output { 
 
-    // errorStrategy 'retry'
-    // maxRetries 3
+    errorStrategy 'retry'
+    maxRetries 3
 
 	container "quay.io/vpeddu/lava_image:latest"
 
