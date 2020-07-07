@@ -233,7 +233,7 @@ process Extract_variants {
 	/usr/local/miniconda/bin/samtools flagstat !{BAM} | \
 	awk 'NR==1{printf $1","} NR==5{printf $1","} NR==5{print substr($5,2)}' >> reads.csv
 
-	awk -F":" '($24+0)>=1{print}' !{EXONICVARIANTS}> !{R1}.txt
+	awk -F":" '($26+0)>=1{print}' !{EXONICVARIANTS}> !{R1}.txt
 
 	grep "SNV" !{R1}.txt > a.tmp
 	grep "stop" !{R1}.txt >> a.tmp
