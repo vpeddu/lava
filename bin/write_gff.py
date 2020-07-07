@@ -32,56 +32,8 @@ def read_fasta(fasta_file_loc):
 	# Replaces Us with Ts (causes problems downstream).
 	genome_list.append(dna_string.replace('U', 'T'))
 	return strain_list, genome_list
-def build_num_arrays(our_seq, ref_seq):
-	ref_count = 0
-	our_count = 0
-	ref_num_array = []
-	our_num_array = []
 
-	# Loops through the GenBank reference fasta sequence.
-	for x in range(0, len(ref_seq)):
-		if ref_seq[x] != '-':
-			ref_count += 1
-			ref_num_array.append(ref_count)
-		else:
-			ref_num_array.append(-1)
-
-		if our_seq[x] != '-':
-			our_count += 1
-			our_num_array.append(our_count)
-		else:
-			our_num_array.append(-1)
-
-	return our_num_array, ref_num_array
-def adjust(given_num, our_num_array, ref_num_array, genome):
-	
-	# Handles gene lengths that go off the end of the genome
-	if given_num == len(genome):
-		return len(genome)
-
-	# Goes through our number array and searches for the number of interest
-	if our_num_array[given_num] == '-1':
-		in_dex = given_num
-		while our_num_array[in_dex != '-1']:
-			in_dex += 1
-			break
-		return str(our_num_array[in_dex])
-
-	else:
-		found = False
-		for x in range(0, len(our_num_array)):
-			if ref_num_array[x] == given_num:
-				index = x
-				found = True
-				break
-
-	# Now index is the absolute location of what we want
-	if found:
-		return str(our_num_array[index])
-	else:
-		return str(len(genome))    
-
-ignore, genome_ref = read_fasta('consensus.fasta')
+ignore, genome_ref = read_fasta('lava_ref.fasta')
 g = open('consensus.fasta', 'w')
 g.write(">lava\n")
 g.write(genome_ref[0])
@@ -120,39 +72,6 @@ for line in open('lava_ref.gbk'):
 			mat_peptide_product_list.append(px)
 			mat_peptide_loc_list.append(mat_peptide_current_loc)
 	
-# Writes a new file for MAFFT input 
-z = open('aligner.fasta', 'w')
-fe = open('consensus.fasta')
-for line in fe:
-	z.write(line)
-fe.close()
-ge = open('lava_ref.fasta')
-z.write('\n')
-for line in ge:
-	z.write(line)
-ge.close()
-z.close()
-
-
-nullo, genome = read_fasta('consensus.fasta')
-subprocess.call('/usr/local/miniconda/bin/mafft --quiet ' + 'aligner.fasta > ' + 'lava.ali', shell=True)
-ali_list, ali_genomes = read_fasta('lava.ali')
-ref_seq = ali_genomes[1]
-our_seq = ali_genomes[0]
-our_seq_num_array, ref_seq_num_array = build_num_arrays(our_seq, ref_seq)
-
-
-
-# Goes through every annotation and adjusts the coordinates from the reference to the consensus sequence
-for entry in range(0, len(gene_loc_list)):
-	for y in range(0, len(gene_loc_list[entry])):
-		gene_loc_list[entry][y] = adjust(int(gene_loc_list[entry][y]), our_seq_num_array, ref_seq_num_array, genome)   
-
-# Adjusts for mature peptides too.
-for entry in range(0, len(mat_peptide_loc_list)):
-	for y in range(0, len(mat_peptide_loc_list[entry])):
-		mat_peptide_loc_list[entry][y] = adjust(int(mat_peptide_loc_list[entry][y]), our_seq_num_array, ref_seq_num_array, genome)   
-
 # Writes mature peptide names and locations to new file.
 mat_peptide_list = open('mat_peptides.txt', 'w')
 for x in range(0, len(mat_peptide_product_list)):
