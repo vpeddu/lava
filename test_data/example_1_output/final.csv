@@ -1,0 +1,5 @@
+Sample,Amino Acid Change,Position,AF,Change,Protein,NucleotideChange,LetterChange,Syn,Depth,Passage
+Example1_file1.fastq,HN Y109F,7076,22.08,Y109F,HN,A326T,A to T,nonsynonymous SNV,17,0
+Example1_file1.fastq,L T781A,10931,27.98,T781A,L,A2341G,A to G,nonsynonymous SNV,61,0
+Example1_file2.fastq,HN P241L,7472,28.57,P241L,HN,C722T,C to T,nonsynonymous SNV,14,1
+Example1_file2.fastq,HN S554N,8411,45.68,S554N,HN,G1661A,G to A,nonsynonymous SNV,37,1

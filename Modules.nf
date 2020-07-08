@@ -34,6 +34,7 @@ process CreateGFF {
 			python3 $workflow.projectDir/bin/pull_entrez.py ${GENBANK}
 		else 
 			mv ${FASTA} lava_ref.fasta
+			cp lava_ref.fasta consensus.fasta
 			mv ${GFF} lava_ref.gff
 
 			#Creates empty txt file
