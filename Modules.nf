@@ -3,12 +3,13 @@ process CreateGFF {
 
 	// Retry on fail at most three times 
     errorStrategy 'retry'
-    maxRetries 3
+    maxRetries 1
+    // Define the input files
 	
     input:
       val(GENBANK)
-	  file FASTA
-	  file GFF
+	  file PULL_ENTREZ
+	  file WRITE_GFF
 
     // Define the output files
     output: 
@@ -25,29 +26,10 @@ process CreateGFF {
     
 	set -e 
     #for logging
-	echo ${FASTA}
-    ls -latr 
 
-    #Entrez fetch function
-	if [[ ${FASTA} == "NO_FILE" ]]
-		then
-			python3 $workflow.projectDir/bin/pull_entrez.py ${GENBANK}
-		else 
-			mv ${FASTA} lava_ref.fasta
-			cp lava_ref.fasta consensus.fasta
-			mv ${GFF} lava_ref.gff
-
-			#Creates empty txt file
-			touch ribosomal_start.txt
-			touch mat_peptides.txt
-	fi
-
+	python3 ${PULL_ENTREZ} ${GENBANK}
     /usr/local/miniconda/bin/bwa index lava_ref.fasta
-
-	if [[ ${FASTA} == "NO_FILE" ]]
-		then
-			python3 $workflow.projectDir/bin/write_gff.py
-	fi
+	python3 ${WRITE_GFF}
 
     """
 }
@@ -146,7 +128,7 @@ process Pipeline_prep {
 		file blank_ignore
 		file "lava_ref.gff"
 		tuple file('consensus.fasta.amb'), file('consensus.fasta.bwt'), file('consensus.fasta.sa'), file('consensus.fasta'), file('consensus.fasta.ann'), file('consensus.fasta.pac')
-
+		file INITIALIZE_MERGED_CSV
 
 	output: 
 		file 'merged.csv'
@@ -158,7 +140,7 @@ process Pipeline_prep {
 
 	echo "Sample,Amino Acid Change,Position,AF,Change,Protein,NucleotideChange,LetterChange,Syn,Depth,Passage" > merged.csv
 
-	python3 $workflow.projectDir/bin/initialize_merged_csv.py
+	python3 ${INITIALIZE_MERGED_CSV}
 	"""
 }
 
@@ -257,7 +239,7 @@ process Annotate_complex {
 
 	input: 
 		tuple file(SAMPLE_CSV), val(PASSAGE), file("reads.csv"), file(R1)
-
+		file ANNOTATE_COMPLEX_MUTATIONS
 	output:
 		file R1
 		file "${R1}.complex.log"
@@ -269,7 +251,7 @@ process Annotate_complex {
 	"""
 	#!/bin/bash
 
-	python3 $workflow.projectDir/bin/Annotate_complex_mutations.py ${SAMPLE_CSV} ${PASSAGE}	
+	python3 ${ANNOTATE_COMPLEX_MUTATIONS} ${SAMPLE_CSV} ${PASSAGE}	
 
 	mv complex.log ${R1}.complex.log
 
@@ -295,6 +277,10 @@ process Generate_output {
 		file VCF
 		file RIBOSOMAL_LOCATION
 		file MAT_PEPTIDE_LOCATIONS
+		file MAT_PEPTIDE_ADDITION
+		file RIBOSOMAL_SLIPPAGE
+		file GENOME_PROTEIN_PLOTS
+		file PALETTE
 
 	output:
 		file "*.html"
@@ -310,6 +296,8 @@ process Generate_output {
 	ls -lah
 
 	# cat *fastq.csv >> merged.csv
+
+	head ${PALETTE}
 
 	cat merged.csv > final.csv 
 	
@@ -331,11 +319,11 @@ process Generate_output {
 	# Sorts by beginning of mat peptide
 	sort -k2 -t, -n mat_peptides.txt > a.tmp && mv a.tmp mat_peptides.txt
 	# Adds mature peptide differences from protein start.
-	python3 $workflow.projectDir/bin/mat_peptide_addition.py
+	python3 ${MAT_PEPTIDE_ADDITION}
 	rm mat_peptides.txt
 
 	# Corrects for ribosomal slippage.
-	python3 $workflow.projectDir/bin/ribosomal_slippage.py final.csv proteins.csv
+	python3 ${RIBOSOMAL_SLIPPAGE} final.csv proteins.csv
 
 	
 	awk NF final.csv > a.tmp && mv a.tmp final.csv
@@ -344,7 +332,7 @@ process Generate_output {
 
 	cat *.log > complex.log
 	# TODO error handling @ line 669-683 of lava.py 
-	python3 $workflow.projectDir/bin/genome_protein_plots.py visualization.csv proteins.csv reads.csv . "Plot"
+	python3 ${GENOME_PROTEIN_PLOTS} visualization.csv proteins.csv reads.csv . "Plot"
 
 	mkdir vcf_files
 	mv *.vcf vcf_files

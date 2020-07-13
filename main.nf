@@ -80,8 +80,8 @@ params.OUTDIR= false
 
 
 params.GENBANK = 'False'
-params.GFF = 'False'
-params.FASTA = 'NO_FILE'
+//params.GFF = 'False'
+//params.FASTA = 'NO_FILE'
 params.DEDUPLICATE = 'false' 
 params.ALLELE_FREQ = 'NO_VAL'
 
@@ -101,8 +101,17 @@ include Annotate_complex from './Modules.nf'
 include Generate_output from './Modules.nf'
 
 
-FASTA = file(params.FASTA)
- //input_read_ch = Channel
+// Staging python scripts
+PULL_ENTREZ = file("$workflow.projectDir/bin/pull_entrez.py")
+WRITE_GFF = file("$workflow.projectDir/bin/write_gff.py")
+INITIALIZE_MERGED_CSV = file("$workflow.projectDir/bin/initialize_merged_csv.py")
+ANNOTATE_COMPLEX_MUTATIONS = file("$workflow.projectDir/bin/Annotate_complex_mutations.py")
+MAT_PEPTIDE_ADDITION = file("$workflow.projectDir/bin/mat_peptide_addition.py")
+RIBOSOMAL_SLIPPAGE = file("$workflow.projectDir/bin/ribosomal_slippage.py")
+GENOME_PROTEIN_PLOTS = file("$workflow.projectDir/bin/genome_protein_plots.py")
+PALETTE = file("$workflow.projectDir/bin/palette.py")
+
+//input_read_ch = Channel
 
 
 // Error handling for input flags
@@ -112,23 +121,23 @@ if (params.OUTDIR == false) {
     exit(1)
 }
 // If --GENBANK and --FASTA or --GFF are specified at the same time
-if(((params.GENBANK != "False") && (params.FASTA != "NO_FILE"))){ 
-    println("--GENBANK cannot be used with --FASTA or --GFF")
-    exit(1)
-}
-if(((params.GENBANK != "False") && (params.GFF != "False"))){ 
-    println("--GENBANK cannot be used with --FASTA or --GFF")
-    exit(1)
-}
-// If --FASTA without --GENBANK or vice versa
-if( (params.FASTA != "NO_FILE") && params.GFF == 'False'){ 
-    println('--GFF needs to be specified with --FASTA')
-    exit(1)
-}
-if( (params.GFF != "False") && params.FASTA == 'NO_FILE'){ 
-    println('--FASTA needs to be specified with --GFF')
-    exit(1)
-}
+// if(((params.GENBANK != "False") && (params.FASTA != "NO_FILE"))){ 
+//     println("--GENBANK cannot be used with --FASTA or --GFF")
+//     exit(1)
+// }
+// if(((params.GENBANK != "False") && (params.GFF != "False"))){ 
+//     println("--GENBANK cannot be used with --FASTA or --GFF")
+//     exit(1)
+// }
+// // If --FASTA without --GENBANK or vice versa
+// if( (params.FASTA != "NO_FILE") && params.GFF == 'False'){ 
+//     println('--GFF needs to be specified with --FASTA')
+//     exit(1)
+// }
+// if( (params.GFF != "False") && params.FASTA == 'NO_FILE'){ 
+//     println('--FASTA needs to be specified with --GFF')
+//     exit(1)
+// }
 // If no flags specified
 if(params.GFF == "False" && params.FASTA == 'NO_FILE' && params.GENBANK == "False"){ 
     println('Either --GENBANK or --FASTA + --GFF are required flags')
@@ -169,8 +178,8 @@ workflow {
     log.info nfcoreHeader()
         CreateGFF ( 
             params.GENBANK,
-            file(params.FASTA),
-            file(params.GFF)
+            PULL_ENTREZ,
+            WRITE_GFF
         )
         
         Alignment_prep ( 
@@ -189,7 +198,8 @@ workflow {
         Pipeline_prep ( 
             Align_samples.out[0].collect(),
             CreateGFF.out[2],
-            Alignment_prep.out[0]
+            Alignment_prep.out[0],
+            INITIALIZE_MERGED_CSV
         )
 
         Create_VCF ( 
@@ -205,7 +215,8 @@ workflow {
         )
 
         Annotate_complex( 
-            Extract_variants.out[0]
+            Extract_variants.out[0],
+            ANNOTATE_COMPLEX_MUTATIONS
         )
 
         Generate_output( 
@@ -218,7 +229,11 @@ workflow {
             Align_samples.out[1].collect(),
             Create_VCF.out[2].collect(),
             CreateGFF.out[3],
-            CreateGFF.out[4]
+            CreateGFF.out[4],
+            MAT_PEPTIDE_ADDITION,
+            RIBOSOMAL_SLIPPAGE,
+            GENOME_PROTEIN_PLOTS,
+            PALETTE
         )
         
     publish:
