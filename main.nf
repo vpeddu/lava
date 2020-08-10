@@ -139,8 +139,8 @@ if (params.OUTDIR == false) {
 //     exit(1)
 // }
 // If no flags specified
-if(params.GFF == "False" && params.FASTA == 'NO_FILE' && params.GENBANK == "False"){ 
-    println('Either --GENBANK or --FASTA + --GFF are required flags')
+if(params.GENBANK == "False"){ 
+    println('Must provide --GENBANK flag with GenBank accession number.')
     exit(1)
 }
 
